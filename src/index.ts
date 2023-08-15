@@ -15,6 +15,11 @@ import { NodeCallback } from 'abstract-level/types/interfaces';
 import { AbstractKeyIteratorOptions } from 'abstract-level/types/abstract-iterator';
 import bridge from '@vkontakte/vk-bridge';
 
+const ITERATOR_LIMIT = 1000;
+
+const KEY_SIZE_LIMIT = 100;
+const VALUE_SIZE_LIMIT = 4096;
+
 export class VkBridgeLevel extends AbstractLevel<string, string, string> {
   _bridge = bridge;
 
@@ -33,6 +38,22 @@ export class VkBridgeLevel extends AbstractLevel<string, string, string> {
     options: AbstractPutOptions<string, string>,
     callback: NodeCallback<void>,
   ): void {
+    if (key.length > KEY_SIZE_LIMIT) {
+      return this.nextTick(
+        callback,
+        new ModuleError(`key size must be less or equal ${KEY_SIZE_LIMIT}`, {
+          code: 'LEVEL_INVALID_KEY',
+        }),
+      );
+    }
+    if (value.length > VALUE_SIZE_LIMIT) {
+      return this.nextTick(
+        callback,
+        new ModuleError(`value size must be less or equal ${VALUE_SIZE_LIMIT}`, {
+          code: 'LEVEL_INVALID_VALUE',
+        }),
+      );
+    }
     this._bridge
       .send('VKWebAppStorageSet', {
         key,
@@ -149,22 +170,40 @@ export class VkBridgeIterator extends AbstractIterator<VkBridgeLevel, string, st
 
   private _next(callback: NodeCallback<void>): void {
     if (this.keys === undefined) {
+      const count = Number.isSafeInteger(this.limit) ? this.limit : ITERATOR_LIMIT;
+      if (count > ITERATOR_LIMIT) {
+        return this.db.nextTick(
+          callback,
+          new ModuleError(`limit must be les then ${ITERATOR_LIMIT}`, {
+            code: 'LEVEL_ITERATOR_NOT_OPEN',
+          }),
+        );
+      }
       this.db._bridge
-        .send('VKWebAppStorageGetKeys')
+        .send('VKWebAppStorageGetKeys', { offset: 0, count })
         .then(async ({ keys }) => {
+          if (keys === undefined) {
+            return this.db.nextTick(
+              callback,
+              new ModuleError('bridge was not inited', {
+                code: 'LEVEL_ITERATOR_NOT_OPEN',
+              }),
+            );
+          }
           this.keys = keys;
           const i = this.index;
+
           if (this.keys.length <= i) {
-            return this.db.nextTick(callback, null, null, null);
+            return this.db.nextTick(callback, null);
           }
 
           this.index++;
 
           const { keys: returnedKeys } = await this.db._bridge.send('VKWebAppStorageGet', {
-            keys: [ this.keys[i]],
+            keys: [this.keys[i]],
           });
           if (returnedKeys.length === 0) {
-            return this.db.nextTick(callback, null, null, null);
+            return this.db.nextTick(callback, null);
           }
           const [{ key, value }] = returnedKeys;
           this.db.nextTick(callback, null, key, value);
@@ -180,7 +219,7 @@ export class VkBridgeIterator extends AbstractIterator<VkBridgeLevel, string, st
     } else {
       const i = this.index;
       if (this.keys.length <= i) {
-        return this.db.nextTick(callback, null, null, null);
+        return this.db.nextTick(callback, null);
       }
 
       this.index++;
@@ -191,10 +230,18 @@ export class VkBridgeIterator extends AbstractIterator<VkBridgeLevel, string, st
         })
         .then(({ keys: returnedKeys }) => {
           if (returnedKeys.length === 0) {
-            return this.db.nextTick(callback, null, null, null);
+            return this.db.nextTick(callback, null);
           }
           const [{ key, value }] = returnedKeys;
           this.db.nextTick(callback, null, key, value);
+        })
+        .catch((e) => {
+          this.db.nextTick(
+            callback,
+            new ModuleError(JSON.stringify(e), {
+              code: 'LEVEL_REMOTE_ERROR',
+            }),
+          );
         });
     }
   }
@@ -217,13 +264,31 @@ export class VkBridgeKeyIterator extends AbstractKeyIterator<VkBridgeLevel, stri
 
   private _next(callback: NodeCallback<void>): void {
     if (this.keys === undefined) {
+      const count = Number.isSafeInteger(this.limit) ? this.limit : ITERATOR_LIMIT;
+      if (count > ITERATOR_LIMIT) {
+        return this.db.nextTick(
+          callback,
+          new ModuleError(`limit must be les then ${ITERATOR_LIMIT}`, {
+            code: 'LEVEL_ITERATOR_NOT_OPEN',
+          }),
+        );
+      }
       this.db._bridge
-        .send('VKWebAppStorageGetKeys')
+        .send('VKWebAppStorageGetKeys', { offset: 0, count })
         .then(({ keys }) => {
+          if (keys === undefined) {
+            return this.db.nextTick(
+              callback,
+              new ModuleError('bridge was not inited', {
+                code: 'LEVEL_ITERATOR_NOT_OPEN',
+              }),
+            );
+          }
+
           this.keys = keys;
           const i = this.index;
           if (this.keys.length <= i) {
-            return this.db.nextTick(callback, null, null);
+            return this.db.nextTick(callback, null);
           }
 
           this.index++;
@@ -240,7 +305,7 @@ export class VkBridgeKeyIterator extends AbstractKeyIterator<VkBridgeLevel, stri
     } else {
       const i = this.index;
       if (this.keys.length <= i) {
-        return this.db.nextTick(callback, null, null);
+        return this.db.nextTick(callback, null);
       }
 
       this.index++;
