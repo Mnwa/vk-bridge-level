@@ -17,3 +17,5 @@ await db.iterator().next().then(console.log) // will return
 
 ### Todo
 - [ ] Write tests on bridge mock
+- [ ] Refactor iterators
+  - Allow batch iterating
