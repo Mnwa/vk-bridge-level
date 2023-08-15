@@ -1,8 +1,10 @@
 {
   "name": "vk-bridge-level",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Level abstraction for VK Bridge",
   "license": "MIT",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "files": ["lib/**/*"],
   "scripts": {
     "build": "tsc",
@@ -27,5 +29,9 @@
     "module-error": "^1.0.2"
   },
   "keywords": ["birdge", "level"],
-  "author": "Mnwa"
+  "author": "Mnwa",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mnwa/vk-bridge-level.git"
+  }
 }
