@@ -184,11 +184,10 @@ export class VkBridgeIterator extends AbstractIterator<VkBridgeLevel, string, st
       }
 
       this.index++;
-      const key = this.keys[i];
 
       this.db._bridge
         .send('VKWebAppStorageGet', {
-          keys: [key],
+          keys: [this.keys[i]],
         })
         .then(({ keys: returnedKeys }) => {
           if (returnedKeys.length === 0) {
