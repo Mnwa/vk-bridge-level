@@ -154,16 +154,19 @@ export class VkBridgeIterator extends AbstractIterator<VkBridgeLevel, string, st
         .then(async ({ keys }) => {
           this.keys = keys;
           const i = this.index;
+          if (this.keys.length <= i) {
+            return this.db.nextTick(callback, null, null, null);
+          }
+
           this.index++;
-          const key = keys[i];
-          this.db.nextTick(callback, null, keys[i]);
+
           const { keys: returnedKeys } = await this.db._bridge.send('VKWebAppStorageGet', {
-            keys: [key],
+            keys: [ this.keys[i]],
           });
           if (returnedKeys.length === 0) {
-            this.db.nextTick(callback, null, null, null);
+            return this.db.nextTick(callback, null, null, null);
           }
-          const [{ value }] = returnedKeys;
+          const [{ key, value }] = returnedKeys;
           this.db.nextTick(callback, null, key, value);
         })
         .catch((e) => {
@@ -176,8 +179,24 @@ export class VkBridgeIterator extends AbstractIterator<VkBridgeLevel, string, st
         });
     } else {
       const i = this.index;
+      if (this.keys.length <= i) {
+        return this.db.nextTick(callback, null, null, null);
+      }
+
       this.index++;
-      this.db.nextTick(callback, null, this.keys[i]);
+      const key = this.keys[i];
+
+      this.db._bridge
+        .send('VKWebAppStorageGet', {
+          keys: [key],
+        })
+        .then(({ keys: returnedKeys }) => {
+          if (returnedKeys.length === 0) {
+            return this.db.nextTick(callback, null, null, null);
+          }
+          const [{ key, value }] = returnedKeys;
+          this.db.nextTick(callback, null, key, value);
+        });
     }
   }
 
@@ -204,8 +223,12 @@ export class VkBridgeKeyIterator extends AbstractKeyIterator<VkBridgeLevel, stri
         .then(({ keys }) => {
           this.keys = keys;
           const i = this.index;
+          if (this.keys.length <= i) {
+            return this.db.nextTick(callback, null, null, null);
+          }
+
           this.index++;
-          this.db.nextTick(callback, null, keys.length > i ? keys[i] : null);
+          this.db.nextTick(callback, null, this.keys[i]);
         })
         .catch((e) => {
           this.db.nextTick(
@@ -217,6 +240,10 @@ export class VkBridgeKeyIterator extends AbstractKeyIterator<VkBridgeLevel, stri
         });
     } else {
       const i = this.index;
+      if (this.keys.length <= i) {
+        return this.db.nextTick(callback, null, null, null);
+      }
+
       this.index++;
       this.db.nextTick(callback, null, this.keys[i]);
     }
