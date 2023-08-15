@@ -223,7 +223,7 @@ export class VkBridgeKeyIterator extends AbstractKeyIterator<VkBridgeLevel, stri
           this.keys = keys;
           const i = this.index;
           if (this.keys.length <= i) {
-            return this.db.nextTick(callback, null, null, null);
+            return this.db.nextTick(callback, null, null);
           }
 
           this.index++;
@@ -240,7 +240,7 @@ export class VkBridgeKeyIterator extends AbstractKeyIterator<VkBridgeLevel, stri
     } else {
       const i = this.index;
       if (this.keys.length <= i) {
-        return this.db.nextTick(callback, null, null, null);
+        return this.db.nextTick(callback, null, null);
       }
 
       this.index++;
