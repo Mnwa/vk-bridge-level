@@ -1,9 +1,21 @@
 # [Level](https://github.com/Level/abstract-level) abstraction for VK Bridge
+[![npm](https://img.shields.io/npm/v/vk-bridge-level.svg)](https://www.npmjs.com/package/vk-bridge-level)
+
 Use it for easy for getting access to easy database interface around [VK Bridge Storage](https://dev.vk.com/ru/bridge/VKWebAppStorageGet)
 
-#### [API Reference](https://github.com/Level/abstract-level#table-of-contents)
+## Install
+### NPM
+```shell
+npm i vk-bridge-level
+```
+### Yarn
+```shell
+yarn add vk-bridge-level
+```
+## Usage
 
-#### Example
+### [API Reference](https://github.com/Level/abstract-level#table-of-contents)
+### Example
 ```ts
 import {VkBridgeLevel} from 'vk-bridge-level'
 import bridge from '@vkontakte/vk-bridge';
@@ -16,5 +28,5 @@ await db.get(key).then(console.log) // will return value from storage
 await db.iterator().next().then(console.log) // will return
 ```
 
-### Todo
+## Todo
 - [ ] Write tests on bridge mock
