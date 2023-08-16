@@ -28,11 +28,11 @@ export class VkBridgeLevel extends AbstractLevel<string, string, string> {
     super({ encodings, getMany: true, keyIterator: true, seek: true, snapshots: false }, options);
   }
 
-  private _open(_options: AbstractOpenOptions, callback: NodeCallback<void>): void {
+  protected _open(_options: AbstractOpenOptions, callback: NodeCallback<void>): void {
     this.nextTick(callback);
   }
 
-  private _put(
+  protected _put(
     key: string,
     value: string,
     options: AbstractPutOptions<string, string>,
@@ -65,7 +65,7 @@ export class VkBridgeLevel extends AbstractLevel<string, string, string> {
       .catch((e) => this.processBridgeError(e, callback));
   }
 
-  private _get(key: string, options: AbstractGetOptions<string, string>, callback: NodeCallback<void>): void {
+  protected _get(key: string, options: AbstractGetOptions<string, string>, callback: NodeCallback<void>): void {
     this._bridge
       .send('VKWebAppStorageGet', {
         keys: [key],
@@ -87,7 +87,7 @@ export class VkBridgeLevel extends AbstractLevel<string, string, string> {
       .catch((e) => this.processBridgeError(e, callback));
   }
 
-  private _del(key: string, options: AbstractDelOptions<string>, callback: NodeCallback<void>): void {
+  protected _del(key: string, options: AbstractDelOptions<string>, callback: NodeCallback<void>): void {
     this._bridge
       .send('VKWebAppStorageSet', {
         key,
@@ -99,7 +99,7 @@ export class VkBridgeLevel extends AbstractLevel<string, string, string> {
       .catch((e) => this.processBridgeError(e, callback));
   }
 
-  private _getMany(
+  protected _getMany(
     keys: string[],
     options: AbstractGetManyOptions<string, string>,
     callback: NodeCallback<void>,
@@ -120,15 +120,15 @@ export class VkBridgeLevel extends AbstractLevel<string, string, string> {
       .catch((e) => this.processBridgeError(e, callback));
   }
 
-  private _iterator(options: AbstractIteratorOptions<string, string>) {
+  protected _iterator(options: AbstractIteratorOptions<string, string>) {
     return new VkBridgeIterator(this, options);
   }
 
-  private _keys(options: AbstractKeyIteratorOptions<string>) {
+  protected _keys(options: AbstractKeyIteratorOptions<string>) {
     return new VkBridgeKeyIterator(this, options);
   }
 
-  private _batch(
+  protected _batch(
     operations: AbstractBatchOperation<VkBridgeLevel, string, string>[],
     options: AbstractBatchOptions<string, string>,
     callback: NodeCallback<void>,

@@ -2,7 +2,6 @@ import { AbstractKeyIteratorOptions, CommonIterator } from 'abstract-level/types
 import { VkBridgeLevel } from '../index';
 import { AbstractKeyIterator, AbstractSeekOptions } from 'abstract-level';
 import { NodeCallback } from 'abstract-level/types/interfaces';
-import ModuleError from 'module-error';
 
 const ITERATOR_LIMIT = 1000;
 
@@ -15,7 +14,7 @@ export class VkBridgeKeyIterator extends AbstractKeyIterator<VkBridgeLevel, stri
     super(db, options);
   }
 
-  private _next(callback: NodeCallback<void>): void {
+  protected _next(callback: NodeCallback<void>): void {
     if (this.needLoadMore()) {
       this.loadKeys(Number.isSafeInteger(this.limit) ? this.limit : ITERATOR_LIMIT)
         .then(() => this.nextInner(callback))
@@ -25,7 +24,7 @@ export class VkBridgeKeyIterator extends AbstractKeyIterator<VkBridgeLevel, stri
     }
   }
 
-  private _nextv(size: number, options: {}, callback: NodeCallback<void>): void {
+  protected _nextv(size: number, options: {}, callback: NodeCallback<void>): void {
     if (this.needLoadMore(size)) {
       this.loadKeys(Math.min(size, ITERATOR_LIMIT))
         .then(() => this.nextInnerMulti(size, callback))
@@ -35,7 +34,7 @@ export class VkBridgeKeyIterator extends AbstractKeyIterator<VkBridgeLevel, stri
     }
   }
 
-  private _seek(target: string, options: AbstractSeekOptions<string>) {
+  protected _seek(target: string, options: AbstractSeekOptions<string>) {
     const i = this.keys.indexOf(target);
     if (i !== -1) {
       this.index = i;
