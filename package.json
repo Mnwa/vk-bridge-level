@@ -1,6 +1,6 @@
 {
   "name": "vk-bridge-level",
-  "version": "1.3.0",
+  "version": "2.0.0",
   "description": "Level abstraction for VK Bridge",
   "license": "MIT",
   "main": "lib/index.js",
@@ -24,7 +24,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@vkontakte/vk-bridge": "^2",
+    "@vkontakte/vk-bridge": "*",
     "abstract-level": "^1",
     "module-error": "^1"
   },

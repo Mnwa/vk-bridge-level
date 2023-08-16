@@ -10,7 +10,7 @@ import {
 import { AbstractDatabaseOptions, AbstractOpenOptions, AbstractPutOptions } from 'abstract-level/types/abstract-level';
 import { NodeCallback } from 'abstract-level/types/interfaces';
 import { AbstractKeyIteratorOptions } from 'abstract-level/types/abstract-iterator';
-import bridge from '@vkontakte/vk-bridge';
+import { type VKBridge } from '@vkontakte/vk-bridge';
 import { VkBridgeKeyIterator } from './iterators/key_iterator';
 import { VkBridgeIterator } from './iterators/full_iterator';
 
@@ -18,9 +18,10 @@ const KEY_SIZE_LIMIT = 100;
 const VALUE_SIZE_LIMIT = 4096;
 
 export class VkBridgeLevel extends AbstractLevel<string, string, string> {
-  _bridge = bridge;
-
-  constructor(options?: AbstractDatabaseOptions<string, string> | undefined) {
+  constructor(
+    readonly _bridge: VKBridge,
+    options?: AbstractDatabaseOptions<string, string> | undefined,
+  ) {
     const encodings = { utf8: true };
     super({ encodings, getMany: true, keyIterator: true, seek: true, snapshots: false }, options);
   }

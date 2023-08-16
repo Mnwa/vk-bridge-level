@@ -6,9 +6,10 @@ Use it for easy for getting access to easy database interface around [VK Bridge 
 #### Example
 ```ts
 import {VkBridgeLevel} from 'vk-bridge-level'
+import bridge from '@vkontakte/vk-bridge';
 
-const db = new VkBridgeLevel({ valueEncoding: 'json' }) // valueEncoding will auto encode and encode your objects to json
-const key = 'key' 
+const db = new VkBridgeLevel(bridge, {valueEncoding: 'json'}) // valueEncoding will auto encode and encode your objects to json
+const key = 'key'
 const value = {test: 'test'} // object to store
 await db.put(key, value)
 await db.get(key).then(console.log) // will return value from storage
