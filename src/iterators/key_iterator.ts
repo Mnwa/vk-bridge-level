@@ -4,7 +4,7 @@ import { AbstractKeyIterator, AbstractSeekOptions } from 'abstract-level';
 import { NodeCallback } from 'abstract-level/types/interfaces';
 import ModuleError from 'module-error';
 
-const ITERATOR_LIMIT = 10;
+const ITERATOR_LIMIT = 1000;
 
 export class VkBridgeKeyIterator extends AbstractKeyIterator<VkBridgeLevel, string> {
   private keys: string[] = [];
