@@ -4,18 +4,15 @@ import {
   AbstractDelOptions,
   AbstractGetOptions,
   AbstractLevel,
-  AbstractKeyIterator,
   AbstractGetManyOptions,
-  AbstractIterator,
   AbstractIteratorOptions,
-  AbstractSeekOptions,
 } from 'abstract-level';
 import { AbstractDatabaseOptions, AbstractOpenOptions, AbstractPutOptions } from 'abstract-level/types/abstract-level';
 import { NodeCallback } from 'abstract-level/types/interfaces';
 import { AbstractKeyIteratorOptions } from 'abstract-level/types/abstract-iterator';
 import bridge from '@vkontakte/vk-bridge';
-
-const ITERATOR_LIMIT = 1000;
+import { VkBridgeKeyIterator } from './iterators/key_iterator';
+import { VkBridgeIterator } from './iterators/full_iterator';
 
 const KEY_SIZE_LIMIT = 100;
 const VALUE_SIZE_LIMIT = 4096;
@@ -62,14 +59,7 @@ export class VkBridgeLevel extends AbstractLevel<string, string, string> {
       .then(() => {
         this.nextTick(callback);
       })
-      .catch((e) => {
-        this.nextTick(
-          callback,
-          new ModuleError(JSON.stringify(e), {
-            code: 'LEVEL_REMOTE_ERROR',
-          }),
-        );
-      });
+      .catch((e) => this.processBridgeError(e, callback));
   }
 
   private _get(key: string, options: AbstractGetOptions<string, string>, callback: NodeCallback<void>): void {
@@ -91,14 +81,7 @@ export class VkBridgeLevel extends AbstractLevel<string, string, string> {
 
         this.nextTick(callback, null, value);
       })
-      .catch((e) => {
-        this.nextTick(
-          callback,
-          new ModuleError(JSON.stringify(e), {
-            code: 'LEVEL_REMOTE_ERROR',
-          }),
-        );
-      });
+      .catch((e) => this.processBridgeError(e, callback));
   }
 
   private _del(key: string, options: AbstractDelOptions<string>, callback: NodeCallback<void>): void {
@@ -110,14 +93,7 @@ export class VkBridgeLevel extends AbstractLevel<string, string, string> {
       .then(() => {
         this.nextTick(callback);
       })
-      .catch((e) => {
-        this.nextTick(
-          callback,
-          new ModuleError(JSON.stringify(e), {
-            code: 'LEVEL_REMOTE_ERROR',
-          }),
-        );
-      });
+      .catch((e) => this.processBridgeError(e, callback));
   }
 
   private _getMany(
@@ -138,14 +114,7 @@ export class VkBridgeLevel extends AbstractLevel<string, string, string> {
 
         this.nextTick(callback, null, values);
       })
-      .catch((e) => {
-        this.nextTick(
-          callback,
-          new ModuleError(JSON.stringify(e), {
-            code: 'LEVEL_REMOTE_ERROR',
-          }),
-        );
-      });
+      .catch((e) => this.processBridgeError(e, callback));
   }
 
   private _iterator(options: AbstractIteratorOptions<string, string>) {
@@ -155,168 +124,13 @@ export class VkBridgeLevel extends AbstractLevel<string, string, string> {
   private _keys(options: AbstractKeyIteratorOptions<string>) {
     return new VkBridgeKeyIterator(this, options);
   }
-}
 
-export class VkBridgeIterator extends AbstractIterator<VkBridgeLevel, string, string> {
-  private keys?: string[];
-  private index = 0;
-
-  constructor(
-    db: VkBridgeLevel,
-    private readonly options: AbstractIteratorOptions<string, string>,
-  ) {
-    super(db, options);
-  }
-
-  private _next(callback: NodeCallback<void>): void {
-    if (this.keys === undefined) {
-      const count = Number.isSafeInteger(this.limit) ? this.limit : ITERATOR_LIMIT;
-      if (count > ITERATOR_LIMIT) {
-        return this.db.nextTick(
-          callback,
-          new ModuleError(`limit must be les then ${ITERATOR_LIMIT}`, {
-            code: 'LEVEL_ITERATOR_NOT_OPEN',
-          }),
-        );
-      }
-      this.db._bridge
-        .send('VKWebAppStorageGetKeys', { offset: 0, count })
-        .then(async ({ keys }) => {
-          if (keys === undefined) {
-            return this.db.nextTick(
-              callback,
-              new ModuleError('bridge was not inited', {
-                code: 'LEVEL_ITERATOR_NOT_OPEN',
-              }),
-            );
-          }
-          this.keys = keys;
-          const i = this.index;
-
-          if (this.keys.length <= i) {
-            return this.db.nextTick(callback, null);
-          }
-
-          this.index++;
-
-          const { keys: returnedKeys } = await this.db._bridge.send('VKWebAppStorageGet', {
-            keys: [this.keys[i]],
-          });
-          if (returnedKeys.length === 0) {
-            return this.db.nextTick(callback, null);
-          }
-          const [{ key, value }] = returnedKeys;
-          this.db.nextTick(callback, null, key, value);
-        })
-        .catch((e) => {
-          this.db.nextTick(
-            callback,
-            new ModuleError(JSON.stringify(e), {
-              code: 'LEVEL_REMOTE_ERROR',
-            }),
-          );
-        });
-    } else {
-      const i = this.index;
-      if (this.keys.length <= i) {
-        return this.db.nextTick(callback, null);
-      }
-
-      this.index++;
-
-      this.db._bridge
-        .send('VKWebAppStorageGet', {
-          keys: [this.keys[i]],
-        })
-        .then(({ keys: returnedKeys }) => {
-          if (returnedKeys.length === 0) {
-            return this.db.nextTick(callback, null);
-          }
-          const [{ key, value }] = returnedKeys;
-          this.db.nextTick(callback, null, key, value);
-        })
-        .catch((e) => {
-          this.db.nextTick(
-            callback,
-            new ModuleError(JSON.stringify(e), {
-              code: 'LEVEL_REMOTE_ERROR',
-            }),
-          );
-        });
-    }
-  }
-
-  private _seek(target: string, options: AbstractSeekOptions<string>) {
-    const i = this.keys?.indexOf(target);
-    if (i !== undefined) {
-      this.index = i;
-    }
-  }
-}
-
-export class VkBridgeKeyIterator extends AbstractKeyIterator<VkBridgeLevel, string> {
-  private keys?: string[];
-  private index = 0;
-
-  constructor(db: VkBridgeLevel, options: AbstractKeyIteratorOptions<string>) {
-    super(db, options);
-  }
-
-  private _next(callback: NodeCallback<void>): void {
-    if (this.keys === undefined) {
-      const count = Number.isSafeInteger(this.limit) ? this.limit : ITERATOR_LIMIT;
-      if (count > ITERATOR_LIMIT) {
-        return this.db.nextTick(
-          callback,
-          new ModuleError(`limit must be les then ${ITERATOR_LIMIT}`, {
-            code: 'LEVEL_ITERATOR_NOT_OPEN',
-          }),
-        );
-      }
-      this.db._bridge
-        .send('VKWebAppStorageGetKeys', { offset: 0, count })
-        .then(({ keys }) => {
-          if (keys === undefined) {
-            return this.db.nextTick(
-              callback,
-              new ModuleError('bridge was not inited', {
-                code: 'LEVEL_ITERATOR_NOT_OPEN',
-              }),
-            );
-          }
-
-          this.keys = keys;
-          const i = this.index;
-          if (this.keys.length <= i) {
-            return this.db.nextTick(callback, null);
-          }
-
-          this.index++;
-          this.db.nextTick(callback, null, this.keys[i]);
-        })
-        .catch((e) => {
-          this.db.nextTick(
-            callback,
-            new ModuleError(JSON.stringify(e), {
-              code: 'LEVEL_REMOTE_ERROR',
-            }),
-          );
-        });
-    } else {
-      const i = this.index;
-      if (this.keys.length <= i) {
-        return this.db.nextTick(callback, null);
-      }
-
-      this.index++;
-      this.db.nextTick(callback, null, this.keys[i]);
-    }
-  }
-
-  private _seek(target: string, options: AbstractSeekOptions<string>) {
-    const i = this.keys?.indexOf(target);
-    if (i !== undefined) {
-      this.index = i;
-    }
+  processBridgeError(e: unknown, callback: NodeCallback<void>) {
+    this.nextTick(
+      callback,
+      new ModuleError(JSON.stringify(e), {
+        code: 'LEVEL_REMOTE_ERROR',
+      }),
+    );
   }
 }
