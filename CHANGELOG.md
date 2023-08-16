@@ -1,12 +1,12 @@
 # CHANGELOG
 
-## 2.0.1
+## 2.1.1
 ### Added
 - Changelog
 - Instructions for install 
 - License
 
-## 2.0.0
+## 2.1.0
 ### Added
 - Added batch put and dels operations support
 
