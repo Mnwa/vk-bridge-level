@@ -15,6 +15,7 @@
 - Added batch loading support for iterators
 ### Breaking changes
 - Iterators moved to `iterators` folder
+- VkBridgeLevel requires bridge instance on init
 
 ## 1.2.0
 ### Added
