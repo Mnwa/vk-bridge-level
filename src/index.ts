@@ -5,7 +5,7 @@ import {
   AbstractGetOptions,
   AbstractLevel,
   AbstractGetManyOptions,
-  AbstractIteratorOptions,
+  AbstractIteratorOptions, AbstractBatchOperation, AbstractBatchOptions,
 } from 'abstract-level';
 import { AbstractDatabaseOptions, AbstractOpenOptions, AbstractPutOptions } from 'abstract-level/types/abstract-level';
 import { NodeCallback } from 'abstract-level/types/interfaces';
@@ -124,6 +124,21 @@ export class VkBridgeLevel extends AbstractLevel<string, string, string> {
 
   private _keys(options: AbstractKeyIteratorOptions<string>) {
     return new VkBridgeKeyIterator(this, options);
+  }
+
+  private _batch(operations: AbstractBatchOperation<VkBridgeLevel, string, string>[], options: AbstractBatchOptions<string, string>, callback: NodeCallback<void>) {
+    const fetchedOperations = operations.map(operation => {
+      switch (operation.type) {
+        case 'del':
+          return this.del(operation.key)
+        case 'put':
+          return this.put(operation.key, operation.value, operation)
+      }
+    })
+
+    Promise.all(fetchedOperations)
+      .then(() => this.nextTick(callback))
+      .catch(e => this.processBridgeError(e, callback))
   }
 
   processBridgeError(e: unknown, callback: NodeCallback<void>) {
