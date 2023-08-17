@@ -3,6 +3,7 @@
 ## 2.2.0
 ### Added
 - Batch size limit
+- Tests
 ### Fixed
 - Variables visibility
 
