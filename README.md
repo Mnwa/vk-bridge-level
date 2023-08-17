@@ -28,6 +28,3 @@ await db.put(key, value)
 await db.get(key).then(console.log) // will return value from storage
 await db.iterator().next().then(console.log) // will return
 ```
-
-## Todo
-- [ ] Write tests on bridge mock
