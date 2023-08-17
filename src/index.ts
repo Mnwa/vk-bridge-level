@@ -18,6 +18,7 @@ import { VkBridgeIterator } from './iterators/full_iterator';
 
 const KEY_SIZE_LIMIT = 100;
 const VALUE_SIZE_LIMIT = 4096;
+const BATCH_LIMIT = 3;
 
 export class VkBridgeLevel extends AbstractLevel<string, string, string> {
   constructor(
@@ -133,6 +134,14 @@ export class VkBridgeLevel extends AbstractLevel<string, string, string> {
     options: AbstractBatchOptions<string, string>,
     callback: NodeCallback<void>,
   ) {
+    if (operations.length > BATCH_LIMIT) {
+      return this.nextTick(
+        callback,
+        new ModuleError(`operations size must be less or equal ${BATCH_LIMIT}`, {
+          code: 'LEVEL_BATCH_NOT_OPEN',
+        }),
+      );
+    }
     const fetchedOperations = operations.map((operation) => {
       switch (operation.type) {
         case 'del':
