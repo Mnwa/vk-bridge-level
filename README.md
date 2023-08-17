@@ -20,7 +20,7 @@ yarn add vk-bridge-level
 import {VkBridgeLevel} from 'vk-bridge-level'
 import bridge from '@vkontakte/vk-bridge';
 
-const db = new VkBridgeLevel(bridge, {valueEncoding: 'json'}) // valueEncoding will auto encode and encode your objects to json
+const db = new VkBridgeLevel(bridge, {valueEncoding: 'json'}) // valueEncoding will auto encode and decode your objects to json
 const key = 'key'
 const value = {test: 'test'} // object to store
 await db.put(key, value)

@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 2.2.0
+### Added
+- Batch size limit
+### Fixed
+- Variables visibility
+
 ## 2.1.1
 ### Added
 - Changelog
