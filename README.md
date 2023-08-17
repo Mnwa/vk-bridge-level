@@ -1,4 +1,5 @@
 # [Level](https://github.com/Level/abstract-level) abstraction for VK Bridge
+![level badge](https://leveljs.org/img/badge.svg)
 [![npm](https://img.shields.io/npm/v/vk-bridge-level.svg)](https://www.npmjs.com/package/vk-bridge-level)
 
 Use it for easy for getting access to easy database interface around [VK Bridge Storage](https://dev.vk.com/ru/bridge/VKWebAppStorageGet)
